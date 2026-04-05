@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { LandingPage } from './components/LandingPage'
 import { PuzzleCanvas } from './components/canvas/PuzzleCanvas'
-import { DemoScene } from './components/canvas/DemoScene'
 import { JigsawPuzzle } from './components/puzzles/JigsawPuzzle'
 import { JigsawUploader } from './components/puzzles/JigsawUploader'
+import { GeometryPuzzle } from './components/puzzles/GeometryPuzzle'
+import { GeometryPicker } from './components/puzzles/GeometryPicker'
+import { type ShapeType } from './lib/geometry/exploder'
 
 type PuzzleMode = 'home' | 'jigsaw' | 'geometry'
 
@@ -22,6 +24,7 @@ const hudBtnStyle: React.CSSProperties = {
 function App() {
   const [mode, setMode] = useState<PuzzleMode>('home')
   const [jigsawImageUrl, setJigsawImageUrl] = useState<string | null>(null)
+  const [selectedShape, setSelectedShape] = useState<ShapeType | null>(null)
 
   return (
     <>
@@ -71,20 +74,40 @@ function App() {
 
       {mode === 'geometry' && (
         <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-          <PuzzleCanvas>
-            <DemoScene />
-          </PuzzleCanvas>
+          {selectedShape ? (
+            <PuzzleCanvas cameraPosition={[0, 6, 14]}>
+              <GeometryPuzzle
+                shape={selectedShape}
+                shardCount={10}
+                onSolved={() => console.log('Geometry solved!')}
+              />
+            </PuzzleCanvas>
+          ) : (
+            <GeometryPicker onSelect={(s) => setSelectedShape(s)} />
+          )}
+
+          {/* HUD */}
           <div style={{
             position: 'absolute', top: 0, left: 0, right: 0,
             padding: '1rem 1.5rem',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             background: 'linear-gradient(180deg, rgba(5,5,10,0.85) 0%, transparent 100%)',
             fontFamily: "'DM Mono', monospace",
+            pointerEvents: selectedShape ? 'auto' : 'none',
           }}>
-            <span style={{ color: '#818cf8', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+            <span style={{ color: '#a78bfa', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
               ◈ Custom Geometry
             </span>
-            <button onClick={() => setMode('home')} style={hudBtnStyle}>← Back</button>
+            <div style={{ display: 'flex', gap: '0.5rem', pointerEvents: 'auto' }}>
+              {selectedShape && (
+                <button onClick={() => setSelectedShape(null)} style={hudBtnStyle}>
+                  ↺ Change Shape
+                </button>
+              )}
+              <button onClick={() => { setMode('home'); setSelectedShape(null) }} style={hudBtnStyle}>
+                ← Back
+              </button>
+            </div>
           </div>
         </div>
       )}
