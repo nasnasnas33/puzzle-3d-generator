@@ -9,6 +9,51 @@ import { type ShapeType } from './lib/geometry/exploder'
 
 type PuzzleMode = 'home' | 'jigsaw' | 'geometry'
 
+function ZoomSlider({ zoom, onChange }: { zoom: number; onChange: (v: number) => void }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <style>{`
+        .zoom-slider {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 90px;
+          height: 2px;
+          background: rgba(99,102,241,0.3);
+          outline: none;
+          cursor: pointer;
+        }
+        .zoom-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 12px;
+          height: 12px;
+          background: #6366f1;
+          border-radius: 50%;
+          border: none;
+        }
+        .zoom-slider::-moz-range-thumb {
+          width: 12px;
+          height: 12px;
+          background: #6366f1;
+          border-radius: 50%;
+          border: none;
+        }
+      `}</style>
+      <span style={{ color: '#4b5563', fontSize: '0.6rem', letterSpacing: '0.1em' }}>
+        zoom
+      </span>
+      <input
+        type="range"
+        className="zoom-slider"
+        min={6}
+        max={30}
+        value={zoom}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
+    </div>
+  )
+}
+
 const hudBtnStyle: React.CSSProperties = {
   background: 'none',
   border: '1px solid rgba(99,102,241,0.3)',
@@ -25,6 +70,8 @@ function App() {
   const [mode, setMode] = useState<PuzzleMode>('home')
   const [jigsawImageUrl, setJigsawImageUrl] = useState<string | null>(null)
   const [selectedShape, setSelectedShape] = useState<ShapeType | null>(null)
+  const [jigsawZoom, setJigsawZoom] = useState(14)
+  const [geometryZoom, setGeometryZoom] = useState(12)
 
   return (
     <>
@@ -34,7 +81,7 @@ function App() {
       {mode === 'jigsaw' && (
         <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
           {jigsawImageUrl ? (
-            <PuzzleCanvas cameraPosition={[0, 12, 16]}>
+            <PuzzleCanvas zoom={jigsawZoom}>
               <JigsawPuzzle
                 imageUrl={jigsawImageUrl}
                 cols={4}
@@ -58,7 +105,8 @@ function App() {
             <span style={{ color: '#818cf8', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
               ⬡ Jigsaw Puzzle
             </span>
-            <div style={{ display: 'flex', gap: '0.5rem', pointerEvents: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', pointerEvents: 'auto' }}>
+              {jigsawImageUrl && <ZoomSlider zoom={jigsawZoom} onChange={setJigsawZoom} />}
               {jigsawImageUrl && (
                 <button onClick={() => setJigsawImageUrl(null)} style={hudBtnStyle}>
                   ↺ New Image
@@ -75,7 +123,7 @@ function App() {
       {mode === 'geometry' && (
         <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
           {selectedShape ? (
-            <PuzzleCanvas cameraPosition={[0, 6, 14]}>
+            <PuzzleCanvas zoom={geometryZoom}>
               <GeometryPuzzle
                 shape={selectedShape}
                 shardCount={10}
@@ -98,7 +146,8 @@ function App() {
             <span style={{ color: '#a78bfa', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
               ◈ Custom Geometry
             </span>
-            <div style={{ display: 'flex', gap: '0.5rem', pointerEvents: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', pointerEvents: 'auto' }}>
+              {selectedShape && <ZoomSlider zoom={geometryZoom} onChange={setGeometryZoom} />}
               {selectedShape && (
                 <button onClick={() => setSelectedShape(null)} style={hudBtnStyle}>
                   ↺ Change Shape
