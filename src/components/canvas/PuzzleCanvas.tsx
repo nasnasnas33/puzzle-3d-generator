@@ -1,29 +1,51 @@
-import { Canvas } from '@react-three/fiber'
+import { useEffect, useRef } from 'react'
+import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { OrbitControls, Environment, Grid } from '@react-three/drei'
 import type { ReactNode } from 'react'
+import * as THREE from 'three'
 
 interface PuzzleCanvasProps {
   /** 3D content to render inside the scene */
   children?: ReactNode
   /** Show the reference grid (default: true) */
   showGrid?: boolean
-  /** Camera position [x, y, z] (default: [0, 8, 14]) */
-  cameraPosition?: [number, number, number]
+  /** Camera zoom level — distance from origin (default: 14, range: 6–30) */
+  zoom?: number
+}
+
+/** Smoothly lerps the camera to match the zoom slider value */
+function ZoomSync({ zoom }: { zoom: number }) {
+  const { camera } = useThree()
+  const target = useRef(new THREE.Vector3(0, zoom * 0.55, zoom))
+
+  useEffect(() => {
+    target.current.set(0, zoom * 0.55, zoom)
+  }, [zoom])
+
+  useFrame(() => {
+    camera.position.lerp(target.current, 0.1)
+    camera.lookAt(0, 0, 0)
+  })
+
+  return null
 }
 
 export function PuzzleCanvas({
   children,
   showGrid = true,
-  cameraPosition = [0, 8, 14],
+  zoom = 14,
 }: PuzzleCanvasProps) {
   return (
     <div style={{ width: '100%', height: '100%', background: '#05050a' }}>
       <Canvas
-        camera={{ position: cameraPosition, fov: 45, near: 0.1, far: 200 }}
+        camera={{ position: [0, zoom * 0.55, zoom], fov: 45, near: 0.1, far: 200 }}
         shadows
         gl={{ antialias: true, alpha: false }}
         style={{ background: '#05050a' }}
       >
+        {/* Camera zoom control */}
+        <ZoomSync zoom={zoom} />
+
         {/* Lighting */}
         <ambientLight intensity={0.4} color="#8888ff" />
         <directionalLight
@@ -65,14 +87,13 @@ export function PuzzleCanvas({
         {/* Scene content */}
         {children}
 
-        {/* Camera controls */}
+        {/* Camera controls — rotation and pan disabled; zoom via slider only */}
         <OrbitControls
           makeDefault
-          enableDamping
-          dampingFactor={0.07}
-          minDistance={3}
-          maxDistance={40}
-          maxPolarAngle={Math.PI / 2.05}
+          enableRotate={false}
+          enablePan={false}
+          enableZoom={false}
+          enableDamping={false}
         />
       </Canvas>
     </div>
